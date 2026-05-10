@@ -1,0 +1,187 @@
+Tasks:
+  IEMOCAPDataProcessor:
+    Tasks:
+      MakeAudioArray: {cache: false, class: ToNumpyDP, column_in: wav2vec2, in: NormalizeSequence->out,
+        in_memory: true}
+      MakeMaskArray: {cache: false, class: ToNumpyDP, column_in: mask, in: SqueezeSequence->out,
+        in_memory: true}
+      MakeTargetsArray: {cache: false, class: ToNumpyDP, column_in: target, in: OneHotVector->out,
+        in_memory: true}
+      NormalizeSequence: {cache: false, class: NormalizeDP, column_in: wav2vec2, column_out: wav2vec2,
+        in: SqueezeSequence->out, in_memory: true, statistics: self->statistics}
+      OneHotVector: {cache: false, class: OneHotVectorDP, column_in: classID, column_out: target,
+        in: SqueezeSequence->out, in_memory: true, n_classes: 4}
+      PadSequence: {axis: 0, cache: false, class: PadDP, column_in: wav2vec2, column_out: wav2vec2,
+        in: self->batch_data, in_memory: true, max_length: 400}
+      SqueezeSequence: {cache: false, class: SqueezeDP, column_in: wav2vec2, column_out: wav2vec2,
+        in: PadSequence->out, in_memory: true}
+    cache: false
+    class: TaskGraph
+    in: {batch_data: null}
+    in_memory: true
+    logging: false
+    outputs: {audio: MakeAudioArray->out, mask: MakeMaskArray->out, targets: MakeTargetsArray->out}
+    return_as_class: true
+  IEMOCAPFilterEmotions:
+    class: Filter
+    column: emotion
+    in: IEMOCAPRelabelExcitement->out
+    in_memory: true
+    include_values: [anger, happiness, sadness, neutral]
+  IEMOCAPKFold:
+    Tasks:
+      IEMOCAPMetrics: {class: ClassificationMetrics, export: true, labels: self->labels,
+        predictions: IEMOCAPPredictionIndex->out, targets: IEMOCAPTargetIndex->out}
+      IEMOCAPModel:
+        class: DienenModel
+        dienen_config:
+          Model:
+            Architecture:
+            - Input: {input: audios, name: input_signal}
+            - Input: {input: masks, name: signal_mask}
+            - WeightedAverage: {axis: 2, input: input_signal, name: activations_wa}
+            - Squeeze: {axis: -2}
+            - Conv1D: {activation: relu, batch_norm: false, dropout: 0.2, filters: 128,
+                kernel_size: 1, name: hidden_layer_1}
+            - Conv1D: {activation: relu, batch_norm: false, dropout: 0.2, filters: 128,
+                kernel_size: 1, name: hidden_layer_2}
+            - GlobalAveragePooling1D: {input: hidden_layer_2, mask: signal_mask}
+            - Dense: {activation: softmax, name: predictions}
+            Training:
+              loss: categorical_crossentropy
+              metrics: categorical_accuracy
+              n_epochs: 100
+              optimizer: {clipvalue: 1, lr: 0.0001, type: Adam}
+              schedule:
+                EarlyStopping: {patience: 4}
+                SaveCheckpoints: {monitor_metric: val_loss}
+                WANDBLogger:
+                  loggers:
+                    TrainMetrics: {freq: 10, unit: step}
+              workers: 1
+            inputs: [input_signal, signal_mask]
+            name: feature_learnable_combination_masked_mlp_pooling
+            outputs: [predictions]
+          gpu_config: {allow_growth: true, device: 0}
+        export: true
+        mods: dienen_config/Model/Training/schedule/WANDBLogger/loggers/TrainMetrics/prefix=IEMOCAP
+        seed: 1234
+        train_data: IEMOCAPTrainGenerator->out
+        validation_data: IEMOCAPValidationGenerator->out
+        wandb_run: self->wandb
+      IEMOCAPPartition:
+        cache: false
+        class: OutputMerger
+        in_memory: true
+        outputs: {test: IEMOCAPPartitionDevTest->test, train: IEMOCAPPartitionTrainVal->train,
+          validation: IEMOCAPPartitionTrainVal->validation}
+      IEMOCAPPartitionDevTest:
+        cache: false
+        class: Split
+        group_outputs: {dev: self->dev_partitions, test: self->test_partitions}
+        in: self->data
+        in_memory: true
+        split_col: session
+      IEMOCAPPartitionTrainVal: {cache: false, class: Split, in: IEMOCAPPartitionTrainValColumn->out,
+        in_memory: true, split_col: partition}
+      IEMOCAPPartitionTrainValColumn:
+        class: GroupSplit
+        column: partition
+        group_column: session
+        in: IEMOCAPPartitionDevTest->dev
+        in_memory: true
+        splits: {train: 0.9, validation: 0.1}
+      IEMOCAPPredict: {cache: false, class: DienenPredict, data: IEMOCAPTestGenerator->out,
+        export: true, model: IEMOCAPModel->out, return_column: filename}
+      IEMOCAPPredictionIndex: {axis: -1, class: Pool, in: IEMOCAPPredict->predictions,
+        in_memory: true, type: argmax}
+      IEMOCAPStatisticsTest: {axis: 0, by: subject, class: NormalizationStatistics,
+        column: wav2vec2, in: IEMOCAPPartition->test}
+      IEMOCAPStatisticsTrain: {axis: 0, by: subject, class: NormalizationStatistics,
+        column: wav2vec2, in: IEMOCAPPartition->train}
+      IEMOCAPStatisticsValidation: {axis: 0, by: subject, class: NormalizationStatistics,
+        column: wav2vec2, in: IEMOCAPPartition->validation}
+      IEMOCAPTargetIndex: {axis: -1, class: Pool, in: IEMOCAPPredict->targets, in_memory: true,
+        type: argmax}
+      IEMOCAPTestGenerator:
+        batch_size: 32
+        batch_task: self->data_processor
+        cache: false
+        class: BatchGenerator
+        extra_data: {statistics: IEMOCAPStatisticsTest->out}
+        in: IEMOCAPPartition->test
+        in_memory: true
+        seed: 1234
+        shuffle: false
+        x: [audio, mask]
+        y: targets
+      IEMOCAPTrainGenerator:
+        batch_size: 32
+        batch_task: self->data_processor
+        cache: false
+        class: BatchGenerator
+        extra_data: {statistics: IEMOCAPStatisticsTrain->out}
+        in: IEMOCAPPartition->train
+        in_memory: true
+        seed: 1234
+        x: [audio, mask]
+        y: targets
+      IEMOCAPValidationGenerator:
+        batch_size: 32
+        batch_task: self->data_processor
+        cache: false
+        class: BatchGenerator
+        extra_data: {statistics: IEMOCAPStatisticsValidation->out}
+        in: IEMOCAPPartition->validation
+        in_memory: true
+        seed: 1234
+        shuffle: false
+        x: [audio, mask]
+        y: targets
+    cache: false
+    class: TaskGraph
+    in: {data: IEMOCAPMergeFeatures->out, data_processor: IEMOCAPDataProcessor->out,
+      dev_partitions: IEMOCAPLeaveOneOut->train, labels: IEMOCAPLabelEncode->labels,
+      test_partitions: IEMOCAPLeaveOneOut->test}
+    map_vars: !!python/object/new:ruamel.yaml.comments.CommentedSeq
+      listitems: [in/dev_partitions, in/test_partitions]
+      state: !!python/tuple
+      - _yaml_format: !!python/object/new:ruamel.yaml.comments.Format
+          state: !!python/tuple
+          - null
+          - {_flow_style: true}
+        _yaml_line_col: !!python/object:ruamel.yaml.comments.LineCol
+          col: 1
+          data:
+            0: [0, 2]
+            1: [0, 23]
+          line: 0
+      - _yaml_comment: !!python/object/new:ruamel.yaml.comments.Comment
+          state: !!python/tuple
+          - null
+          - _end: []
+            _items: {}
+            comment: null
+    outputs: {metrics: IEMOCAPMetrics->out, predictions: IEMOCAPPredictionIndex->out,
+      targets: IEMOCAPTargetIndex->out}
+  IEMOCAPLabelEncode: {class: LabelEncoder, column: emotion, in: IEMOCAPFilterEmotions->out,
+    in_memory: true, new_column: classID}
+  IEMOCAPLeaveOneOut: {cache: false, class: LeaveOneOut, group_col: session, in: IEMOCAPMergeFeatures->out}
+  IEMOCAPMergeFeatures: {class: Merge, in: IEMOCAP*Feature->out, in_memory: true}
+  IEMOCAPMergePredictions: {axis: 0, class: Concatenate, in: IEMOCAPKFold->predictions}
+  IEMOCAPMergeTargets: {axis: 0, class: Concatenate, in: IEMOCAPKFold->targets}
+  IEMOCAPMergedMetrics: {class: ClassificationMetrics, export: true, predictions: IEMOCAPMergePredictions->out,
+    targets: IEMOCAPMergeTargets->out}
+  IEMOCAPReader: {class: IEMOCAPReader, dataset_path: ~/Datasets/IEMOCAP}
+  IEMOCAPRelabelExcitement:
+    class: Relabel
+    in: IEMOCAPReader->out
+    in_memory: true
+    relabels:
+    - {column: emotion, new_name: happiness, old_name: excited}
+  IEMOCAPWav2Vec2Feature: {class: Wav2Vec2Embeddings, dict_path: null, in: IEMOCAPLabelEncode->out,
+    layer: local_encoder, max_size: 240000, mode: sequence, model_path: ~/Models/wav2vec2/wav2vec_small.pt,
+    output_column: wav2vec2, save_feature_files: true}
+class: TaskGraph
+in: {wandb: WANDBExperiment->out}
+modules: [tasks]

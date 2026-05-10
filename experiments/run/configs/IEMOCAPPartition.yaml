@@ -1,0 +1,3 @@
+class: OutputMerger
+outputs: {test: IEMOCAPPartitionDevTest->test, train: IEMOCAPPartitionTrainVal->train,
+  validation: IEMOCAPPartitionTrainVal->validation}

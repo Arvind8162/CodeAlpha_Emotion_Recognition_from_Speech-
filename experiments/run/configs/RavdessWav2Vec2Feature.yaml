@@ -1,0 +1,3 @@
+{class: Wav2Vec2Embeddings, dict_path: null, in: RavdessLabelEncode->out, layer: local_encoder,
+  max_size: null, mode: sequence, model_path: ~/Models/wav2vec2/wav2vec_small.pt,
+  output_column: wav2vec2, save_feature_files: true}

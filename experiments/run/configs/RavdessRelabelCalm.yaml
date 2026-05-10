@@ -1,0 +1,4 @@
+class: Relabel
+in: RavdessReader->out
+relabels:
+- {column: emotion, new_name: '01', old_name: '02'}

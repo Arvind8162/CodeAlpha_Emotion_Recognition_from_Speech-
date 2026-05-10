@@ -1,0 +1,21 @@
+Tasks:
+  MakeAudioArray: {cache: false, class: ToNumpyDP, column_in: wav2vec2, in: NormalizeSequence->out,
+    in_memory: true}
+  MakeMaskArray: {cache: false, class: ToNumpyDP, column_in: mask, in: SqueezeSequence->out,
+    in_memory: true}
+  MakeTargetsArray: {cache: false, class: ToNumpyDP, column_in: target, in: OneHotVector->out,
+    in_memory: true}
+  NormalizeSequence: {cache: false, class: NormalizeDP, column_in: wav2vec2, column_out: wav2vec2,
+    in: SqueezeSequence->out, in_memory: true, statistics: self->statistics}
+  OneHotVector: {cache: false, class: OneHotVectorDP, column_in: classID, column_out: target,
+    in: SqueezeSequence->out, in_memory: true, n_classes: 4}
+  PadSequence: {axis: 0, cache: false, class: PadDP, column_in: wav2vec2, column_out: wav2vec2,
+    in: self->batch_data, in_memory: true, max_length: 400}
+  SqueezeSequence: {cache: false, class: SqueezeDP, column_in: wav2vec2, column_out: wav2vec2,
+    in: PadSequence->out, in_memory: true}
+class: TaskGraph
+in: {batch_data: null}
+logging: false
+modules: [tasks]
+outputs: {audio: MakeAudioArray->out, mask: MakeMaskArray->out, targets: MakeTargetsArray->out}
+return_as_class: true

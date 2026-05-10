@@ -1,0 +1,139 @@
+Tasks:
+  RavdessDataProcessor:
+    Tasks:
+      MakeAudioArray: {cache: false, class: ToNumpyDP, column_in: wav2vec2, in: NormalizeSequence->out,
+        in_memory: true}
+      MakeMaskArray: {cache: false, class: ToNumpyDP, column_in: mask, in: SqueezeSequence->out,
+        in_memory: true}
+      MakeTargetsArray: {cache: false, class: ToNumpyDP, column_in: target, in: OneHotVector->out,
+        in_memory: true}
+      NormalizeSequence: {cache: false, class: NormalizeDP, column_in: wav2vec2, column_out: wav2vec2,
+        in: SqueezeSequence->out, in_memory: true, statistics: self->statistics}
+      OneHotVector: {cache: false, class: OneHotVectorDP, column_in: classID, column_out: target,
+        in: SqueezeSequence->out, in_memory: true, n_classes: 7}
+      PadSequence: {axis: 0, cache: false, class: PadDP, column_in: wav2vec2, column_out: wav2vec2,
+        in: self->batch_data, in_memory: true, max_length: 250}
+      SqueezeSequence: {cache: false, class: SqueezeDP, column_in: wav2vec2, column_out: wav2vec2,
+        in: PadSequence->out, in_memory: true}
+    cache: false
+    class: TaskGraph
+    in: {batch_data: null}
+    in_memory: true
+    logging: false
+    outputs: {audio: MakeAudioArray->out, mask: MakeMaskArray->out, targets: MakeTargetsArray->out}
+    return_as_class: true
+  RavdessFilterEmotions: {class: Filter, column: emotion, in: RavdessRelabelCalm->out,
+    in_memory: true, include_values: null}
+  RavdessLabelEncode: {class: LabelEncoder, column: emotion, in: RavdessFilterEmotions->out,
+    in_memory: true, new_column: classID}
+  RavdessMergeFeatures: {class: Merge, in: Ravdess*Feature->out, in_memory: true}
+  RavdessMetrics: {class: ClassificationMetrics, export: true, labels: RavdessLabelEncode->labels,
+    predictions: RavdessPredictionIndex->out, targets: RavdessTargetIndex->out}
+  RavdessModel:
+    class: DienenModel
+    dienen_config:
+      Model:
+        Architecture:
+        - Input: {input: audios, name: input_signal}
+        - Input: {input: masks, name: signal_mask}
+        - Conv1D: {activation: relu, batch_norm: false, dropout: 0.2, filters: 128,
+            input: input_signal, kernel_size: 1, name: hidden_layer_1}
+        - Conv1D: {activation: relu, batch_norm: false, dropout: 0.2, filters: 128,
+            kernel_size: 1, name: hidden_layer_2}
+        - GlobalAveragePooling1D: {input: hidden_layer_2, mask: signal_mask}
+        - Dense: {activation: softmax, name: predictions}
+        Training:
+          loss: categorical_crossentropy
+          metrics: categorical_accuracy
+          n_epochs: 100
+          optimizer: {clipvalue: 1, lr: 0.0001, type: Adam}
+          schedule:
+            EarlyStopping: {patience: 4}
+            SaveCheckpoints: {monitor_metric: val_loss}
+            WANDBLogger:
+              loggers:
+                TrainMetrics: {freq: 10, unit: step}
+          workers: 1
+        inputs: [input_signal, signal_mask]
+        name: masked_mlp_pooling
+        outputs: [predictions]
+      gpu_config: {allow_growth: true, device: 0}
+    export: true
+    mods: dienen_config/Model/Training/schedule/WANDBLogger/loggers/TrainMetrics/prefix=Ravdess
+    seed: 1234
+    train_data: RavdessTrainGenerator->out
+    validation_data: RavdessValidationGenerator->out
+    wandb_run: self->wandb
+  RavdessPartition: {class: Split, in: RavdessSplit->out, in_memory: true, split_col: partition}
+  RavdessPredict: {cache: false, class: DienenPredict, data: RavdessTestGenerator->out,
+    export: true, model: RavdessModel->out, return_column: filename}
+  RavdessPredictionIndex: {axis: -1, class: Pool, in: RavdessPredict->predictions,
+    in_memory: true, type: argmax}
+  RavdessReader: {class: AudioDatasetFromDirectory, dataset_path: ~/Datasets/RAVDESS,
+    filename_re: '(?P<modality>\d*)-(?P<vocal_channel>\d*)-(?P<emotion>\d*)-(?P<emotional_intensity>\d*)-(?P<statement>\d*)-(?P<repetition>\d*)-(?P<actor>\d*).wav'}
+  RavdessRelabelCalm:
+    class: Relabel
+    in: RavdessReader->out
+    in_memory: true
+    relabels:
+    - {column: emotion, new_name: '01', old_name: '02'}
+  RavdessSplit:
+    class: GroupSplit
+    column: partition
+    export: true
+    group_column: actor
+    in: RavdessMergeFeatures->out
+    splits:
+      test: ['23', '24']
+      train: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
+        '13', '14', '15', '16', '17', '18', '19', '20']
+      validation: ['21', '22']
+  RavdessStatisticsTest: {axis: 0, by: actor, class: NormalizationStatistics, column: wav2vec2,
+    in: RavdessPartition->test}
+  RavdessStatisticsTrain: {axis: 0, by: actor, class: NormalizationStatistics, column: wav2vec2,
+    in: RavdessPartition->train}
+  RavdessStatisticsValidation: {axis: 0, by: actor, class: NormalizationStatistics,
+    column: wav2vec2, in: RavdessPartition->validation}
+  RavdessTargetIndex: {axis: -1, class: Pool, in: RavdessPredict->targets, in_memory: true,
+    type: argmax}
+  RavdessTestGenerator:
+    batch_size: 32
+    batch_task: RavdessDataProcessor->out
+    cache: false
+    class: BatchGenerator
+    extra_data: {statistics: RavdessStatisticsTest->out}
+    in: RavdessPartition->test
+    in_memory: true
+    seed: 1234
+    shuffle: false
+    x: [audio, mask]
+    y: targets
+  RavdessTrainGenerator:
+    batch_size: 32
+    batch_task: RavdessDataProcessor->out
+    cache: false
+    class: BatchGenerator
+    extra_data: {statistics: RavdessStatisticsTrain->out}
+    in: RavdessPartition->train
+    in_memory: true
+    seed: 1234
+    x: [audio, mask]
+    y: targets
+  RavdessValidationGenerator:
+    batch_size: 32
+    batch_task: RavdessDataProcessor->out
+    cache: false
+    class: BatchGenerator
+    extra_data: {statistics: RavdessStatisticsValidation->out}
+    in: RavdessPartition->validation
+    in_memory: true
+    seed: 1234
+    shuffle: false
+    x: [audio, mask]
+    y: targets
+  RavdessWav2Vec2Feature: {class: Wav2Vec2Embeddings, dict_path: null, in: RavdessLabelEncode->out,
+    layer: local_encoder, max_size: null, mode: sequence, model_path: ~/Models/wav2vec2/wav2vec_small.pt,
+    output_column: wav2vec2, save_feature_files: true}
+class: TaskGraph
+in: {wandb: WANDBExperiment->out}
+modules: [tasks]

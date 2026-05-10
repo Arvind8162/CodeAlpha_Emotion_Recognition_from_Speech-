@@ -1,0 +1,1 @@
+{axis: -1, class: Pool, in: RavdessPredict->targets, type: argmax}

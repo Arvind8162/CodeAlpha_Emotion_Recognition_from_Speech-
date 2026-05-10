@@ -1,0 +1,4 @@
+class: Filter
+column: emotion
+in: IEMOCAPRelabelExcitement->out
+include_values: [anger, happiness, sadness, neutral]

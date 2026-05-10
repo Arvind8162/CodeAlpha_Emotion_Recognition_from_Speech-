@@ -1,0 +1,2 @@
+{class: DienenPredict, data: IEMOCAPTestGenerator->out, export: true, model: IEMOCAPModel->out,
+  return_column: filename}

@@ -1,0 +1,2 @@
+{class: NormalizeDP, column_in: wav2vec2, column_out: wav2vec2, in: SqueezeSequence->out,
+  statistics: self->statistics}

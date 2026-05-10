@@ -1,0 +1,4 @@
+class: Relabel
+in: IEMOCAPReader->out
+relabels:
+- {column: emotion, new_name: happiness, old_name: excited}

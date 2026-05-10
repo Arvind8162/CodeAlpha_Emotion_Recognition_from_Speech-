@@ -1,0 +1,2 @@
+{class: OneHotVectorDP, column_in: classID, column_out: target, in: SqueezeSequence->out,
+  n_classes: 7}

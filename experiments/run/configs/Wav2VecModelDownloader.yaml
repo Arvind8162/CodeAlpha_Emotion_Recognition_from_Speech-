@@ -1,0 +1,8 @@
+class: Downloader
+downloads:
+- {DestinationPath: ~/Models/wav2vec2/wav2vec_small.pt, SourcePath: 'https://dl.fbaipublicfiles.com/fairseq/wav2vec/wav2vec_small.pt'}
+- {DestinationPath: ~/Models/wav2vec2/wav2vec_small_960h.pt, SourcePath: 'https://dl.fbaipublicfiles.com/fairseq/wav2vec/wav2vec_small_960h.pt'}
+- {DestinationPath: ~/Models/wav2vec2/wav2vec_vox_new.pt.pt, SourcePath: 'https://dl.fbaipublicfiles.com/fairseq/wav2vec/wav2vec_vox_new.pt'}
+- {DestinationPath: ~/Models/wav2vec2/wav2vec_vox_960h_pl.pt, SourcePath: 'https://dl.fbaipublicfiles.com/fairseq/wav2vec/wav2vec_vox_960h_pl.pt'}
+- {DestinationPath: ~/Models/wav2vec2/dict.ltr.txt, SourcePath: 'https://dl.fbaipublicfiles.com/fairseq/wav2vec/dict.ltr.txt'}
+run_after: WANDBExperiment->out

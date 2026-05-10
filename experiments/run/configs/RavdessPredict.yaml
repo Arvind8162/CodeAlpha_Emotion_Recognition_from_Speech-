@@ -1,0 +1,2 @@
+{class: DienenPredict, data: RavdessTestGenerator->out, export: true, model: RavdessModel->out,
+  return_column: filename}

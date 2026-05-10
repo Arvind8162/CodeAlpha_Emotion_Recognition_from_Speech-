@@ -1,0 +1,1 @@
+{axis: 0, class: DownsampleDP, column_in: null, column_out: null, factor: 2, in: LoadDataframeOS->out}

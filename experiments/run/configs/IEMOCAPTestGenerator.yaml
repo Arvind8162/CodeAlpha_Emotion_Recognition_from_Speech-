@@ -1,0 +1,9 @@
+batch_size: 32
+batch_task: self->data_processor
+class: BatchGenerator
+extra_data: {statistics: IEMOCAPStatisticsTest->out}
+in: IEMOCAPPartition->test
+seed: 1234
+shuffle: false
+x: [audio, mask]
+y: targets

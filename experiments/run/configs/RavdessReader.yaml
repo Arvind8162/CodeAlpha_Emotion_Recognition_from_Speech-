@@ -1,0 +1,1 @@
+{class: AudioDatasetFromDirectory, dataset_path: ~/Datasets/RAVDESS, filename_re: '(?P<modality>\d*)-(?P<vocal_channel>\d*)-(?P<emotion>\d*)-(?P<emotional_intensity>\d*)-(?P<statement>\d*)-(?P<repetition>\d*)-(?P<actor>\d*).wav'}

@@ -1,0 +1,2 @@
+{axis: 0, class: PadDP, column_in: wav2vec2, column_out: wav2vec2, in: self->batch_data,
+  max_length: 250}

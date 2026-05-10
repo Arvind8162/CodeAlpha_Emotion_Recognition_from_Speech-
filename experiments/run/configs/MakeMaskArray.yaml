@@ -1,0 +1,1 @@
+{class: ToNumpyDP, column_in: mask, in: SqueezeSequence->out}

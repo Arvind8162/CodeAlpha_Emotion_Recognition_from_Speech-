@@ -1,0 +1,1 @@
+{class: LeaveOneOut, group_col: session, in: IEMOCAPMergeFeatures->out}

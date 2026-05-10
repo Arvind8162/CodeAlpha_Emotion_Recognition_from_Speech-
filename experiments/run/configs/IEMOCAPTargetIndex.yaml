@@ -1,0 +1,1 @@
+{axis: -1, class: Pool, in: IEMOCAPPredict->targets, type: argmax}

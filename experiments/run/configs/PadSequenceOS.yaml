@@ -1,0 +1,2 @@
+{axis: 0, class: PadDP, column_in: null, column_out: null, in: DownsampleOS->out,
+  max_length: 250}

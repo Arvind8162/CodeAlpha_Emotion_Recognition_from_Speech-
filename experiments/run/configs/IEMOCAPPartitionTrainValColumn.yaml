@@ -1,0 +1,5 @@
+class: GroupSplit
+column: partition
+group_column: session
+in: IEMOCAPPartitionDevTest->dev
+splits: {train: 0.9, validation: 0.1}

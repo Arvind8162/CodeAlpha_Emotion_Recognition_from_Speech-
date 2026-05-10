@@ -1,0 +1,9 @@
+batch_size: 32
+batch_task: RavdessDataProcessor->out
+class: BatchGenerator
+extra_data: {statistics: RavdessStatisticsValidation->out}
+in: RavdessPartition->validation
+seed: 1234
+shuffle: false
+x: [audio, mask]
+y: targets

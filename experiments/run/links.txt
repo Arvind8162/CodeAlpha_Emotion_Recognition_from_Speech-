@@ -1,0 +1,15 @@
+experiments\run\MainTask\WANDBExperiment\out -> D:\CodeAlpha\ser-with-w2v2\cache\199fa4bba9817007c54ae7129e3f7da054c9e272_0\out
+experiments\run\MainTask\DownstreamRavdess\RavdessReader\out -> D:\CodeAlpha\ser-with-w2v2\cache\e6d73cc097bb0be7e52b691404f3159a2a531188_0\out
+experiments\run\MainTask\DownstreamRavdess\RavdessWav2Vec2Feature\out -> D:\CodeAlpha\ser-with-w2v2\cache\002d909cae23c7a253ecf042935b4a8811b4bbf0_0\out
+D:\CodeAlpha\ser-with-w2v2\cache\5f429de813a756563e4e027069d124b9c8c397c8_0\out -> experiments\run\MainTask\DownstreamRavdess\RavdessSplit\out
+D:\CodeAlpha\ser-with-w2v2\cache\09aa2b564dcd032b8345ded37178d7e0a9e9cd15_0\out -> experiments\run\MainTask\DownstreamRavdess\RavdessSplit\out
+experiments\run\MainTask\DownstreamRavdess\RavdessStatisticsTest\out -> D:\CodeAlpha\ser-with-w2v2\cache\cf305ef56e8b7dffb8202a6cfd27c64a73c03761_0\out
+experiments\run\MainTask\DownstreamRavdess\RavdessStatisticsTrain\out -> D:\CodeAlpha\ser-with-w2v2\cache\9b2bfa8dff9491d69aa5e7d5e6c64b02bbe318b2_0\out
+experiments\run\MainTask\DownstreamRavdess\RavdessStatisticsValidation\out -> D:\CodeAlpha\ser-with-w2v2\cache\aa0ce2572a2ea3d7aedd7f62f1a600bda650e2e4_0\out
+D:\CodeAlpha\ser-with-w2v2\cache\952994e6472b582dc29fa73acd23c3a68b8e9aef_0\out -> experiments\run\MainTask\DownstreamRavdess\RavdessModel\out
+D:\CodeAlpha\ser-with-w2v2\cache\f421d32553cd95c67a1c53e36237c51d90423277_0\predictions -> experiments\run\MainTask\DownstreamRavdess\RavdessPredict\predictions
+D:\CodeAlpha\ser-with-w2v2\cache\f421d32553cd95c67a1c53e36237c51d90423277_1\targets -> experiments\run\MainTask\DownstreamRavdess\RavdessPredict\targets
+D:\CodeAlpha\ser-with-w2v2\cache\f421d32553cd95c67a1c53e36237c51d90423277_2\filename -> experiments\run\MainTask\DownstreamRavdess\RavdessPredict\filename
+D:\CodeAlpha\ser-with-w2v2\cache\58160ce580e45ecc7b63fb078323da0ee78a9f0b_0\out -> experiments\run\MainTask\DownstreamRavdess\RavdessMetrics\out
+experiments\run\MainTask\DownstreamRavdess\out -> D:\CodeAlpha\ser-with-w2v2\cache\bbacb66c03816ae9e517a348df36fec671abb9a6_0\out
+experiments\run\MainTask\out -> D:\CodeAlpha\ser-with-w2v2\cache\6c206275dd74ea3eccb45dc518d4fd1874f9667f_0\out

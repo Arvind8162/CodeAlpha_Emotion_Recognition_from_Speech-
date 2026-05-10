@@ -1,0 +1,8 @@
+(dataset)MergeFeatures:
+    class: Merge
+    in: (dataset)*Feature->out
+    in_memory: !nocache True
+include:
+- config: ../partitions/partitions.yaml
+  dataset: (dataset)
+  in_task: (dataset)MergeFeatures

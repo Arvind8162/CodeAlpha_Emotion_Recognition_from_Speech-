@@ -1,0 +1,39 @@
+modules:
+- tasks
+global:
+  #cache_path: s3://lpepino-datasets2/is2021_experiments/cache
+  cache_path: cache
+  dataset: [ravdess, iemocap]
+  features: spectrogram
+  model: dienen_classifier
+
+  Ravdess_model_max_seqlen: 250
+  IEMOCAP_model_max_seqlen: 400
+  IEMOCAP_partition: leave_one_out
+
+  dienen_config: !yaml configs/dienen/mean_mlp.yaml
+  batch_x: [audio,mask]
+  batch_y: targets
+  batch_size: 32
+  n_epochs: 100
+
+  spectrogram_frame_size: 400
+  spectrogram_nfft: 512
+  spectrogram_hop_size: 320
+
+  data_processing_config: ../batch/sequence_embedding.yaml
+  sequence_padding_axis: 0
+
+  wandb_run: WANDBExperiment->out
+
+include:
+- config: ../datasets/datasets.yaml
+
+Tasks:
+  WANDBExperiment:
+    class: WANDBExperiment
+    project_name: w2v_ser
+    experiment_name: ravdess_test
+    description: Testing system in RAVDESS
+    run_first: !nocache True
+    cache: False

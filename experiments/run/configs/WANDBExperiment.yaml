@@ -1,0 +1,2 @@
+{class: WANDBExperiment, description: Testing system in RAVDESS, experiment_name: ravdess_test,
+  project_name: w2v_ser, run_first: true}

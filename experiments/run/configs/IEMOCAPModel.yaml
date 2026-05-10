@@ -1,0 +1,35 @@
+class: DienenModel
+dienen_config:
+  Model:
+    Architecture:
+    - Input: {input: audios, name: input_signal}
+    - Input: {input: masks, name: signal_mask}
+    - WeightedAverage: {axis: 2, input: input_signal, name: activations_wa}
+    - Squeeze: {axis: -2}
+    - Conv1D: {activation: relu, batch_norm: false, dropout: 0.2, filters: 128, kernel_size: 1,
+        name: hidden_layer_1}
+    - Conv1D: {activation: relu, batch_norm: false, dropout: 0.2, filters: 128, kernel_size: 1,
+        name: hidden_layer_2}
+    - GlobalAveragePooling1D: {input: hidden_layer_2, mask: signal_mask}
+    - Dense: {activation: softmax, name: predictions}
+    Training:
+      loss: categorical_crossentropy
+      metrics: categorical_accuracy
+      n_epochs: 100
+      optimizer: {clipvalue: 1, lr: 0.0001, type: Adam}
+      schedule:
+        EarlyStopping: {patience: 4}
+        SaveCheckpoints: {monitor_metric: val_loss}
+        WANDBLogger:
+          loggers:
+            TrainMetrics: {freq: 10, prefix: IEMOCAP, unit: step}
+      workers: 1
+    inputs: [input_signal, signal_mask]
+    name: feature_learnable_combination_masked_mlp_pooling
+    outputs: [predictions]
+  gpu_config: {allow_growth: true, device: 0}
+export: true
+seed: 1234
+train_data: IEMOCAPTrainGenerator->out
+validation_data: IEMOCAPValidationGenerator->out
+wandb_run: self->wandb

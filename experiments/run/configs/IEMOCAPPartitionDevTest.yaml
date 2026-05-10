@@ -1,0 +1,4 @@
+class: Split
+group_outputs: {dev: self->dev_partitions, test: self->test_partitions}
+in: self->data
+split_col: session
