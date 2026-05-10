@@ -1,6 +1,6 @@
 # CodeAlpha_Emotion_Recognition_from_Speech-
 
-### Official implementation of ['Emotion Recognition from Speech Using Wav2vec 2.0 Embeddings'](https://www.isca-speech.org/archive/interspeech_2021/pepino21_interspeech.html)
+
 
 ### Requirements:
 
@@ -101,3 +101,5 @@ Cite as: Pepino, L., Riera, P., Ferrer, L. (2021) Emotion Recognition from Speec
   doi={10.21437/Interspeech.2021-703}
 }
 ```
+
+### Official implementation of ['Emotion Recognition from Speech Using Wav2vec 2.0 Embeddings'](https://www.isca-speech.org/archive/interspeech_2021/pepino21_interspeech.html)
